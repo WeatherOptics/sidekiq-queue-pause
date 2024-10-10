@@ -44,7 +44,7 @@ module Sidekiq
       def retrieve_work
         qcmd = unpaused_queues_cmd
 
-        if qcmd.size > 1
+        if qcmd.size >= 1
           retrieve_work_for_queues qcmd
         else
           sleep(Sidekiq::QueuePause.retry_after || Sidekiq::BasicFetch::TIMEOUT)
@@ -53,7 +53,7 @@ module Sidekiq
       end
 
       def retrieve_work_for_queues(qcmd)
-        queue, job = redis { |conn| conn.blocking_call(Sidekiq::BasicFetch::TIMEOUT, "brpop", *qs, Sidekiq::BasicFetch::TIMEOUT) }
+        queue, job = redis { |conn| conn.blocking_call(Sidekiq::BasicFetch::TIMEOUT, "brpop", *qcmd, Sidekiq::BasicFetch::TIMEOUT) }
         UnitOfWork.new(queue, job, config) if queue
       end
 
