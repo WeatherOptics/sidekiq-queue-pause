@@ -18,7 +18,7 @@ module Sidekiq
       end
 
       def pause(queue, pkey = nil)
-        Sidekiq.redis { |it| it.set rkey(queue, pkey), true }
+        Sidekiq.redis { |it| it.set rkey(queue, pkey), 'true' }
       end
 
       def unpause(queue, pkey = nil)
@@ -26,7 +26,7 @@ module Sidekiq
       end
 
       def paused?(queue, pkey = nil)
-        Sidekiq.redis { |it| it.exists? rkey(queue, pkey) }
+        Sidekiq.redis { |it| it.exists rkey(queue, pkey) } == 1
       end
 
       def unpause_all
@@ -53,8 +53,8 @@ module Sidekiq
       end
 
       def retrieve_work_for_queues(qcmd)
-        work = Sidekiq.redis { |conn| conn.brpop(*qcmd) }
-        UnitOfWork.new(*work) if work
+        queue, job = redis { |conn| conn.blocking_call(Sidekiq::BasicFetch::TIMEOUT, "brpop", *qs, Sidekiq::BasicFetch::TIMEOUT) }
+        UnitOfWork.new(queue, job, config) if queue
       end
 
       # Returns the list of unpause queue names.

@@ -8,6 +8,12 @@ Initializer:
 
 ```ruby
 Sidekiq.configure_server do |config|
+  # Sidekiq 7.x
+  config.capsules.each_value do |cap|
+    cap[:fetch_class] = Sidekiq::QueuePause::PausingFetch
+  end
+
+  # Sidekiq 6.x
   Sidekiq.options[:fetch] = Sidekiq::QueuePause::PausingFetch.new(Sidekiq.options)
 
   # Optionally, you may set some unique key identifying the
